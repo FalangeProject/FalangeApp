@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minhas Lojas - Falange</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📦 Minhas Lojas</h1>
+      <button id="btnLogout" class="btn-logout">Sair</button>
+    </header>
+
+    <button id="btnNovaLoja" class="btn-primary">➕ Nova Loja</button>
+
+    <div id="formLoja" class="form-box hidden">
+      <input type="text" id="nomeLoja" placeholder="Nome da loja" maxlength="50">
+      <div class="form-actions">
+        <button id="btnSalvarLoja" class="btn-primary">Criar</button>
+        <button id="btnCancelarLoja" class="btn-secondary">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="listaLojas" class="lista-lojas"></div>
+    <p id="msgVazioLojas" class="msg-vazio hidden">Você ainda não tem nenhuma loja.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initDashboard();
+    });
+  </script>
+</body>
+</html>
