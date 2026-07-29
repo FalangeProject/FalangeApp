@@ -176,10 +176,13 @@ async function initCorredorPage() {
     return;
   }
 
+  setupSearch();
+
   if (!corredorParam) {
     document.getElementById('tituloPagina').textContent = nomeLoja;
     document.getElementById('secaoCorredores').classList.remove('hidden');
     document.getElementById('secaoMercadorias').classList.add('hidden');
+    document.getElementById('searchBox').classList.remove('hidden');
     renderCorredores();
     return;
   }
@@ -188,9 +191,94 @@ async function initCorredorPage() {
   document.getElementById('tituloPagina').textContent = nomeLoja + ' - Corredor ' + corredorAtual;
   document.getElementById('secaoCorredores').classList.add('hidden');
   document.getElementById('secaoMercadorias').classList.remove('hidden');
+  document.getElementById('searchBox').classList.add('hidden');
+  document.getElementById('searchResults').classList.add('hidden');
 
   renderLista();
   setupFormulario();
+}
+
+function setupSearch() {
+  const input = document.getElementById('searchInput');
+  const btn = document.getElementById('searchBtn');
+  const resultsBox = document.getElementById('searchResults');
+  const secaoCorredores = document.getElementById('secaoCorredores');
+
+  if (!input || !btn) return;
+
+  async function executarBusca() {
+    const termo = input.value.trim().toLowerCase();
+
+    if (!termo) {
+      resultsBox.classList.add('hidden');
+      secaoCorredores.classList.remove('hidden');
+      return;
+    }
+
+    // Se for número → vai para o corredor
+    if (/^\d+$/.test(termo)) {
+      const num = parseInt(termo, 10);
+      if (num >= 1 && num <= 60) {
+        window.location.href = 'corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + num;
+        return;
+      }
+    }
+
+    // Busca por nome da mercadoria
+    const { data, error } = await sb
+      .from('mercadorias')
+      .select('*')
+      .eq('loja_id', lojaId);
+
+    if (error || !data) {
+      resultsBox.innerHTML = '<h3>Erro ao buscar</h3>';
+      resultsBox.classList.remove('hidden');
+      secaoCorredores.classList.add('hidden');
+      return;
+    }
+
+    const resultados = data.filter(function(item) {
+      return item.nome && item.nome.toLowerCase().indexOf(termo) !== -1;
+    });
+
+    // Ordenar por corredor
+    resultados.sort(function(a, b) {
+      return Number(a.corredor) - Number(b.corredor);
+    });
+
+    if (resultados.length === 0) {
+      resultsBox.innerHTML = '<h3>Nenhum resultado para "' + input.value + '"</h3>';
+    } else {
+      let html = '<h3>Resultados (' + resultados.length + ')</h3>';
+      resultados.forEach(function(r) {
+        html += '<div class="result-item">';
+        html += '<div class="info">';
+        html += '<div class="nome">' + r.nome + '</div>';
+        html += '<div class="corredor-tag">Corredor ' + r.corredor + '</div>';
+        html += '<div class="qtd">' + r.quantidade + ' palete' + (Number(r.quantidade) > 1 ? 's' : '') + '</div>';
+        html += '</div>';
+        html += '<a href="corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + r.corredor + '">Abrir</a>';
+        html += '</div>';
+      });
+      resultsBox.innerHTML = html;
+    }
+
+    resultsBox.classList.remove('hidden');
+    secaoCorredores.classList.add('hidden');
+  }
+
+  btn.addEventListener('click', executarBusca);
+
+  input.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') executarBusca();
+  });
+
+  input.addEventListener('input', function() {
+    if (input.value.trim() === '') {
+      resultsBox.classList.add('hidden');
+      secaoCorredores.classList.remove('hidden');
+    }
+  });
 }
 
 async function renderCorredores() {
