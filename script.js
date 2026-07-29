@@ -138,6 +138,7 @@ async function carregarLojas() {
 // ====================== CORREDOR ======================
 
 let lojaId = null;
+let nomeLoja = '';
 let corredorAtual = null;
 let editandoId = null;
 
@@ -150,18 +151,64 @@ async function initCorredorPage() {
 
   const params = new URLSearchParams(window.location.search);
   lojaId = params.get('loja');
-  const nomeLoja = params.get('nome') || 'Loja';
+  nomeLoja = params.get('nome') || 'Loja';
+  const corredorParam = params.get('corredor');
 
   if (!lojaId) {
     window.location.href = 'dashboard.html';
     return;
   }
 
-  corredorAtual = 1;
-  document.getElementById('tituloCorredor').textContent = nomeLoja + ' - Corredor 1';
+  // Se não tiver corredor na URL → mostra a lista de 60 corredores
+  if (!corredorParam) {
+    document.getElementById('tituloPagina').textContent = nomeLoja;
+    document.getElementById('secaoCorredores').classList.remove('hidden');
+    document.getElementById('secaoMercadorias').classList.add('hidden');
+    renderCorredores();
+    return;
+  }
+
+  // Se tiver corredor na URL → mostra as mercadorias
+  corredorAtual = parseInt(corredorParam);
+  document.getElementById('tituloPagina').textContent = nomeLoja + ' - Corredor ' + corredorAtual;
+  document.getElementById('secaoCorredores').classList.add('hidden');
+  document.getElementById('secaoMercadorias').classList.remove('hidden');
 
   renderLista();
   setupFormulario();
+}
+
+async function renderCorredores() {
+  const container = document.getElementById('corredoresGrupos');
+  if (!container) return;
+
+  // Busca quais corredores têm mercadoria nesta loja
+  const { data } = await sb
+    .from('mercadorias')
+    .select('corredor')
+    .eq('loja_id', lojaId);
+
+  const corredoresComItens = {};
+  if (data) {
+    data.forEach(function(item) {
+      corredoresComItens[item.corredor] = true;
+    });
+  }
+
+  let html = '';
+  for (let inicio = 1; inicio <= 60; inicio += 10) {
+    const fim = Math.min(inicio + 9, 60);
+    html += '<div class="grupo"><h3>Corredores ' + inicio + ' a ' + fim + '</h3><div class="botoes-corredor">';
+
+    for (let i = inicio; i <= fim; i++) {
+      const temItens = corredoresComItens[i] ? 'has-items' : '';
+      html += '<a href="corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + i + '" class="' + temItens + '">' + i + '</a>';
+    }
+
+    html += '</div></div>';
+  }
+
+  container.innerHTML = html;
 }
 
 async function renderLista() {
@@ -191,93 +238,4 @@ async function renderLista() {
     html += '<div class="qtd">' + item.quantidade + ' palete' + (item.quantidade > 1 ? 's' : '') + '</div>';
     html += '</div>';
     html += '<div class="item-actions">';
-    html += '<button class="btn-edit" onclick="editarItem(\'' + item.id + '\')">✍🏻</button>';
-    html += '<button class="btn-move" onclick="moverItem(\'' + item.id + '\')">🔄</button>';
-    html += '<button class="btn-delete" onclick="removerItem(\'' + item.id + '\')">🗑️</button>';
-    html += '</div>';
-    html += '</div>';
-  });
-
-  container.innerHTML = html;
-}
-
-function setupFormulario() {
-  const formBox = document.getElementById('formBox');
-  const btnAdicionar = document.getElementById('btnAdicionar');
-
-  btnAdicionar.addEventListener('click', function() {
-    editandoId = null;
-    document.getElementById('formTitle').textContent = 'Nova mercadoria';
-    document.getElementById('inputNome').value = '';
-    document.getElementById('inputQtd').value = '1';
-    formBox.classList.remove('hidden');
-  });
-
-  document.getElementById('btnCancelar').addEventListener('click', function() {
-    formBox.classList.add('hidden');
-  });
-
-  document.getElementById('btnSalvar').addEventListener('click', async function() {
-    const nome = document.getElementById('inputNome').value.trim();
-    const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
-
-    if (!nome) {
-      alert('Digite o nome da mercadoria');
-      return;
-    }
-
-    if (editandoId) {
-      await sb.from('mercadorias').update({
-        nome: nome,
-        quantidade: qtd,
-        atualizado_em: new Date()
-      }).eq('id', editandoId);
-    } else {
-      await sb.from('mercadorias').insert({
-        loja_id: lojaId,
-        corredor: corredorAtual,
-        nome: nome,
-        quantidade: qtd
-      });
-    }
-
-    formBox.classList.add('hidden');
-    renderLista();
-  });
-}
-
-async function editarItem(id) {
-  const { data } = await sb.from('mercadorias').select('*').eq('id', id).single();
-  if (!data) return;
-
-  editandoId = id;
-  document.getElementById('formTitle').textContent = 'Editar mercadoria';
-  document.getElementById('inputNome').value = data.nome;
-  document.getElementById('inputQtd').value = data.quantidade;
-  document.getElementById('formBox').classList.remove('hidden');
-}
-
-async function removerItem(id) {
-  if (!confirm('Remover esta mercadoria?')) return;
-  await sb.from('mercadorias').delete().eq('id', id);
-  renderLista();
-}
-
-async function moverItem(id) {
-  const novo = prompt('Para qual corredor deseja mover? (1 a 60)');
-  if (!novo) return;
-
-  const destino = parseInt(novo);
-  if (isNaN(destino) || destino < 1 || destino > 60) {
-    alert('Número inválido');
-    return;
-  }
-
-  await sb.from('mercadorias').update({
-    corredor: destino,
-    atualizado_em: new Date()
-  }).eq('id', id);
-
-  renderLista();
-  alert('Mercadoria movida para o corredor ' + destino);
-}
+    html += '<button class="btn
