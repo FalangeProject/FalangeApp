@@ -13,12 +13,21 @@
       <h1 id="tituloPagina">Corredores</h1>
     </header>
 
+    <!-- Barra de Pesquisa -->
+    <div id="searchBox" class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Número do corredor ou nome da mercadoria..." autocomplete="off">
+      <button id="searchBtn">Buscar</button>
+    </div>
+
+    <!-- Resultados da pesquisa -->
+    <div id="searchResults" class="search-results hidden"></div>
+
     <!-- Lista de Corredores -->
     <div id="secaoCorredores">
       <div id="corredoresGrupos"></div>
     </div>
 
-    <!-- Lista de Mercadorias (só aparece quando escolher um corredor) -->
+    <!-- Lista de Mercadorias -->
     <div id="secaoMercadorias" class="hidden">
       <button id="btnAdicionar" class="btn-primary">➕ Adicionar mercadoria</button>
 
