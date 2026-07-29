@@ -238,4 +238,93 @@ async function renderLista() {
     html += '<div class="qtd">' + item.quantidade + ' palete' + (item.quantidade > 1 ? 's' : '') + '</div>';
     html += '</div>';
     html += '<div class="item-actions">';
-    html += '<button class="btn
+    html += '<button class="btn-edit" onclick="editarItem(\'' + item.id + '\')">✍🏻</button>';
+    html += '<button class="btn-move" onclick="moverItem(\'' + item.id + '\')">🔄</button>';
+    html += '<button class="btn-delete" onclick="removerItem(\'' + item.id + '\')">🗑️</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function setupFormulario() {
+  const formBox = document.getElementById('formBox');
+  const btnAdicionar = document.getElementById('btnAdicionar');
+
+  btnAdicionar.addEventListener('click', function() {
+    editandoId = null;
+    document.getElementById('formTitle').textContent = 'Nova mercadoria';
+    document.getElementById('inputNome').value = '';
+    document.getElementById('inputQtd').value = '1';
+    formBox.classList.remove('hidden');
+  });
+
+  document.getElementById('btnCancelar').addEventListener('click', function() {
+    formBox.classList.add('hidden');
+  });
+
+  document.getElementById('btnSalvar').addEventListener('click', async function() {
+    const nome = document.getElementById('inputNome').value.trim();
+    const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
+
+    if (!nome) {
+      alert('Digite o nome da mercadoria');
+      return;
+    }
+
+    if (editandoId) {
+      await sb.from('mercadorias').update({
+        nome: nome,
+        quantidade: qtd,
+        atualizado_em: new Date()
+      }).eq('id', editandoId);
+    } else {
+      await sb.from('mercadorias').insert({
+        loja_id: lojaId,
+        corredor: corredorAtual,
+        nome: nome,
+        quantidade: qtd
+      });
+    }
+
+    formBox.classList.add('hidden');
+    renderLista();
+  });
+}
+
+async function editarItem(id) {
+  const { data } = await sb.from('mercadorias').select('*').eq('id', id).single();
+  if (!data) return;
+
+  editandoId = id;
+  document.getElementById('formTitle').textContent = 'Editar mercadoria';
+  document.getElementById('inputNome').value = data.nome;
+  document.getElementById('inputQtd').value = data.quantidade;
+  document.getElementById('formBox').classList.remove('hidden');
+}
+
+async function removerItem(id) {
+  if (!confirm('Remover esta mercadoria?')) return;
+  await sb.from('mercadorias').delete().eq('id', id);
+  renderLista();
+}
+
+async function moverItem(id) {
+  const novo = prompt('Para qual corredor deseja mover? (1 a 60)');
+  if (!novo) return;
+
+  const destino = parseInt(novo);
+  if (isNaN(destino) || destino < 1 || destino > 60) {
+    alert('Número inválido');
+    return;
+  }
+
+  await sb.from('mercadorias').update({
+    corredor: destino,
+    atualizado_em: new Date()
+  }).eq('id', id);
+
+  renderLista();
+  alert('Mercadoria movida para o corredor ' + destino);
+}
