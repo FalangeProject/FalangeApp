@@ -3,36 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Corredor - Falange</title>
+  <title>Corredores - Falange</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <header>
       <a href="dashboard.html" class="back-btn">← Voltar</a>
-      <h1 id="tituloCorredor">Corredor</h1>
+      <h1 id="tituloPagina">Corredores</h1>
     </header>
 
-    <button id="btnAdicionar" class="btn-primary">➕ Adicionar mercadoria</button>
-
-    <div id="formBox" class="form-box hidden">
-      <h3 id="formTitle">Nova mercadoria</h3>
-      <input type="text" id="inputNome" placeholder="Nome da mercadoria" maxlength="80">
-      <input type="number" id="inputQtd" placeholder="Quantidade de paletes" min="1" value="1">
-      <div class="form-actions">
-        <button id="btnSalvar" class="btn-primary">Aceitar</button>
-        <button id="btnCancelar" class="btn-secondary">Cancelar</button>
-      </div>
+    <!-- Lista de Corredores -->
+    <div id="secaoCorredores">
+      <div id="corredoresGrupos"></div>
     </div>
 
-    <div id="listaMercadorias" class="lista-mercadorias"></div>
-    <p id="msgVazio" class="msg-vazio hidden">Nenhuma mercadoria neste corredor.</p>
+    <!-- Lista de Mercadorias (só aparece quando escolher um corredor) -->
+    <div id="secaoMercadorias" class="hidden">
+      <button id="btnAdicionar" class="btn-primary">➕ Adicionar mercadoria</button>
+
+      <div id="formBox" class="form-box hidden">
+        <h3 id="formTitle">Nova mercadoria</h3>
+        <input type="text" id="inputNome" placeholder="Nome da mercadoria" maxlength="80">
+        <input type="number" id="inputQtd" placeholder="Quantidade de paletes" min="1" value="1">
+        <div class="form-actions">
+          <button id="btnSalvar" class="btn-primary">Aceitar</button>
+          <button id="btnCancelar" class="btn-secondary">Cancelar</button>
+        </div>
+      </div>
+
+      <div id="listaMercadorias" class="lista-mercadorias"></div>
+      <p id="msgVazio" class="msg-vazio hidden">Nenhuma mercadoria neste corredor.</p>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
       initCorredorPage();
     });
   </script>
