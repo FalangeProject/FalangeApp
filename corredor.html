@@ -13,30 +13,26 @@
       <h1 id="tituloPagina">Corredores</h1>
     </header>
 
-    <!-- Barra de Pesquisa -->
     <div id="searchBox" class="search-box">
       <input type="text" id="searchInput" placeholder="🔍 Número do corredor ou nome da mercadoria..." autocomplete="off">
       <button id="searchBtn">Buscar</button>
     </div>
 
-    <!-- Resultados da pesquisa -->
     <div id="searchResults" class="search-results hidden"></div>
 
-    <!-- Lista de Corredores -->
     <div id="secaoCorredores">
       <button id="btnExportar" class="btn-exportar">📄 Exportar PDF</button>
       <div id="corredoresGrupos"></div>
     </div>
 
-    <!-- Lista de Mercadorias -->
     <div id="secaoMercadorias" class="hidden">
       <button id="btnAdicionar" class="btn-primary">➕ Adicionar mercadoria</button>
 
       <div id="formBox" class="form-box hidden">
         <h3 id="formTitle">Nova mercadoria</h3>
-       <input type="text" id="inputNome" placeholder="Nome da mercadoria" maxlength="80">
-<input type="text" id="inputValidade" placeholder="Validade (opcional) - ex: 15/08/2026">
-<input type="number" id="inputQtd" placeholder="Quantidade de paletes" min="1" value="1">
+        <input type="text" id="inputNome" placeholder="Nome da mercadoria" maxlength="80">
+        <input type="text" id="inputValidade" placeholder="Validade (opcional) - ex: 15/08/2026">
+        <input type="number" id="inputQtd" placeholder="Quantidade de paletes" min="1" value="1">
         <div class="form-actions">
           <button id="btnSalvar" class="btn-primary">Aceitar</button>
           <button id="btnCancelar" class="btn-secondary">Cancelar</button>
@@ -46,6 +42,8 @@
       <div id="listaMercadorias" class="lista-mercadorias"></div>
       <p id="msgVazio" class="msg-vazio hidden">Nenhuma mercadoria neste corredor.</p>
     </div>
+
+    <p class="credito">Criado por Gabryel Canário</p>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
