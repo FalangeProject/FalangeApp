@@ -176,6 +176,18 @@ async function initCorredorPage() {
     return;
   }
 
+  // Ajusta o botão Voltar conforme a etapa
+  const backBtn = document.querySelector('.back-btn');
+  if (backBtn) {
+    if (corredorParam) {
+      // Está dentro de um corredor → volta para a lista de corredores
+      backBtn.href = 'corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja);
+    } else {
+      // Está na lista de corredores → volta para as lojas
+      backBtn.href = 'dashboard.html';
+    }
+  }
+
   setupSearch();
 
   if (!corredorParam) {
