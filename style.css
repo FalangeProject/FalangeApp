@@ -68,7 +68,6 @@ header h1 {
   cursor: pointer;
 }
 
-/* Auth */
 .auth-box {
   background: white;
   padding: 24px 20px;
@@ -103,7 +102,6 @@ header h1 {
   color: #b91c1c;
 }
 
-/* Botões */
 .btn-primary {
   width: 100%;
   padding: 14px;
@@ -168,7 +166,6 @@ header h1 {
   display: none !important;
 }
 
-/* Lista de Lojas */
 .lista-lojas {
   display: flex;
   flex-direction: column;
@@ -215,7 +212,6 @@ header h1 {
   flex-shrink: 0;
 }
 
-/* Corredores e Mercadorias */
 .lista-mercadorias {
   display: flex;
   flex-direction: column;
@@ -267,17 +263,9 @@ header h1 {
   justify-content: center;
 }
 
-.btn-edit {
-  background: #fef3c7;
-}
-
-.btn-move {
-  background: #dbeafe;
-}
-
-.btn-delete {
-  background: #fee2e2;
-}
+.btn-edit { background: #fef3c7; }
+.btn-move { background: #dbeafe; }
+.btn-delete { background: #fee2e2; }
 
 .msg-vazio {
   text-align: center;
@@ -286,7 +274,6 @@ header h1 {
   font-size: 15px;
 }
 
-/* Grupos de corredores */
 .grupo {
   margin-bottom: 18px;
 }
@@ -325,7 +312,6 @@ header h1 {
   color: #1d4ed8;
 }
 
-/* Barra de Pesquisa */
 .search-box {
   display: flex;
   gap: 8px;
@@ -413,6 +399,7 @@ header h1 {
   font-size: 13px;
   white-space: nowrap;
 }
+
 .btn-exportar {
   width: 100%;
   padding: 14px;
@@ -428,4 +415,12 @@ header h1 {
 
 .btn-exportar:active {
   background: #047857;
+}
+
+.credito {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-top: 30px;
+  padding-bottom: 10px;
 }
