@@ -267,6 +267,9 @@ function setupSearch() {
         html += '<div class="nome">' + r.nome + '</div>';
         html += '<div class="corredor-tag">Corredor ' + r.corredor + '</div>';
         html += '<div class="qtd">' + r.quantidade + ' palete' + (Number(r.quantidade) > 1 ? 's' : '') + '</div>';
+        if (r.validade) {
+          html += '<div class="qtd">Validade: ' + r.validade + '</div>';
+        }
         html += '</div>';
         html += '<a href="corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + r.corredor + '">Abrir</a>';
         html += '</div>';
@@ -349,6 +352,9 @@ async function renderLista() {
     html += '<div class="info">';
     html += '<div class="nome">' + item.nome + '</div>';
     html += '<div class="qtd">' + item.quantidade + ' palete' + (item.quantidade > 1 ? 's' : '') + '</div>';
+    if (item.validade) {
+      html += '<div class="qtd">Validade: ' + item.validade + '</div>';
+    }
     html += '</div>';
     html += '<div class="item-actions">';
     html += '<button class="btn-edit" onclick="editarItem(\'' + item.id + '\')">✍🏻</button>';
@@ -369,6 +375,7 @@ function setupFormulario() {
     editandoId = null;
     document.getElementById('formTitle').textContent = 'Nova mercadoria';
     document.getElementById('inputNome').value = '';
+    document.getElementById('inputValidade').value = '';
     document.getElementById('inputQtd').value = '1';
     formBox.classList.remove('hidden');
   });
@@ -379,6 +386,7 @@ function setupFormulario() {
 
   document.getElementById('btnSalvar').addEventListener('click', async function() {
     const nome = document.getElementById('inputNome').value.trim();
+    const validade = document.getElementById('inputValidade').value.trim();
     const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
 
     if (!nome) {
@@ -389,6 +397,7 @@ function setupFormulario() {
     if (editandoId) {
       await sb.from('mercadorias').update({
         nome: nome,
+        validade: validade || null,
         quantidade: qtd,
         atualizado_em: new Date()
       }).eq('id', editandoId);
@@ -397,6 +406,7 @@ function setupFormulario() {
         loja_id: lojaId,
         corredor: corredorAtual,
         nome: nome,
+        validade: validade || null,
         quantidade: qtd
       });
     }
@@ -413,6 +423,7 @@ async function editarItem(id) {
   editandoId = id;
   document.getElementById('formTitle').textContent = 'Editar mercadoria';
   document.getElementById('inputNome').value = data.nome;
+  document.getElementById('inputValidade').value = data.validade || '';
   document.getElementById('inputQtd').value = data.quantidade;
   document.getElementById('formBox').classList.remove('hidden');
 }
@@ -484,15 +495,16 @@ async function exportarPDF() {
         return [
           String(item.corredor),
           item.nome,
+          item.validade || '-',
           String(item.quantidade)
         ];
       });
 
       doc.autoTable({
         startY: 45,
-        head: [['Corredor', 'Mercadoria', 'Qtd. Paletes']],
+        head: [['Corredor', 'Mercadoria', 'Validade', 'Qtd.']],
         body: rows,
-        styles: { fontSize: 10 },
+        styles: { fontSize: 9 },
         headStyles: { fillColor: [37, 99, 235] }
       });
     }
