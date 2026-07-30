@@ -176,19 +176,21 @@ async function initCorredorPage() {
     return;
   }
 
-  // Ajusta o botão Voltar conforme a etapa
   const backBtn = document.querySelector('.back-btn');
   if (backBtn) {
     if (corredorParam) {
-      // Está dentro de um corredor → volta para a lista de corredores
       backBtn.href = 'corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja);
     } else {
-      // Está na lista de corredores → volta para as lojas
       backBtn.href = 'dashboard.html';
     }
   }
 
   setupSearch();
+
+  const btnExportar = document.getElementById('btnExportar');
+  if (btnExportar) {
+    btnExportar.addEventListener('click', exportarPDF);
+  }
 
   if (!corredorParam) {
     document.getElementById('tituloPagina').textContent = nomeLoja;
@@ -227,7 +229,6 @@ function setupSearch() {
       return;
     }
 
-    // Se for número → vai para o corredor
     if (/^\d+$/.test(termo)) {
       const num = parseInt(termo, 10);
       if (num >= 1 && num <= 60) {
@@ -236,7 +237,6 @@ function setupSearch() {
       }
     }
 
-    // Busca por nome da mercadoria
     const { data, error } = await sb
       .from('mercadorias')
       .select('*')
@@ -253,7 +253,6 @@ function setupSearch() {
       return item.nome && item.nome.toLowerCase().indexOf(termo) !== -1;
     });
 
-    // Ordenar por corredor
     resultados.sort(function(a, b) {
       return Number(a.corredor) - Number(b.corredor);
     });
@@ -441,4 +440,73 @@ async function moverItem(id) {
 
   renderLista();
   alert('Mercadoria movida para o corredor ' + destino);
+}
+
+// ====================== EXPORTAR PDF ======================
+
+async function exportarPDF() {
+  const btn = document.getElementById('btnExportar');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Gerando PDF...';
+  }
+
+  try {
+    const { data, error } = await sb
+      .from('mercadorias')
+      .select('*')
+      .eq('loja_id', lojaId)
+      .order('corredor')
+      .order('nome');
+
+    if (error) {
+      alert('Erro ao buscar dados: ' + error.message);
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const dataAtual = new Date().toLocaleString('pt-BR');
+
+    doc.setFontSize(16);
+    doc.text('Falange - Controle de Paletes', 14, 18);
+
+    doc.setFontSize(12);
+    doc.text('Loja: ' + nomeLoja, 14, 28);
+    doc.text('Exportado em: ' + dataAtual, 14, 36);
+
+    if (!data || data.length === 0) {
+      doc.setFontSize(11);
+      doc.text('Nenhuma mercadoria cadastrada nesta loja.', 14, 50);
+    } else {
+      const rows = data.map(function(item) {
+        return [
+          String(item.corredor),
+          item.nome,
+          String(item.quantidade)
+        ];
+      });
+
+      doc.autoTable({
+        startY: 45,
+        head: [['Corredor', 'Mercadoria', 'Qtd. Paletes']],
+        body: rows,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [37, 99, 235] }
+      });
+    }
+
+    const nomeArquivo = 'Falange_' + nomeLoja.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+    doc.save(nomeArquivo);
+
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao gerar o PDF. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📄 Exportar PDF';
+    }
+  }
 }
