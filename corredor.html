@@ -14,28 +14,30 @@
     </header>
 
     <div id="searchBox" class="search-box">
-      <input type="text" id="searchInput" placeholder="🔍 Número do corredor ou nome da mercadoria..." autocomplete="off">
-      <button id="searchBtn">Buscar</button>
+      <input type="search" id="searchInput" placeholder="🔍 Número do corredor ou nome da mercadoria..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="falange-busca" inputmode="search">
+      <button id="searchBtn" type="button">Buscar</button>
     </div>
 
     <div id="searchResults" class="search-results hidden"></div>
 
     <div id="secaoCorredores">
-      <button id="btnExportar" class="btn-exportar">📄 Exportar PDF</button>
+      <button id="btnExportar" class="btn-exportar" type="button">📄 Exportar PDF</button>
       <div id="corredoresGrupos"></div>
     </div>
 
     <div id="secaoMercadorias" class="hidden">
-      <button id="btnAdicionar" class="btn-primary">➕ Adicionar mercadoria</button>
+      <button id="btnAdicionar" class="btn-primary" type="button">➕ Adicionar mercadoria</button>
 
       <div id="formBox" class="form-box hidden">
         <h3 id="formTitle">Nova mercadoria</h3>
-        <input type="text" id="inputNome" placeholder="Nome da mercadoria" maxlength="80">
-        <input type="text" id="inputValidade" placeholder="Validade (opcional) - ex: 15/08/2026">
-        <input type="number" id="inputQtd" placeholder="Quantidade de paletes" min="1" value="1">
+        <form autocomplete="off" onsubmit="return false;">
+          <input type="text" id="inputNome" placeholder="Nome da mercadoria" maxlength="80" autocomplete="off" name="falange-nome" autocapitalize="off">
+          <input type="text" id="inputValidade" placeholder="Vencimento do pallet (opcional) - ex: 15/08/2026" autocomplete="new-password" name="falange-vencimento" autocapitalize="off" inputmode="text">
+          <input type="number" id="inputQtd" placeholder="Quantidade de paletes" min="1" value="1" autocomplete="off" name="falange-qtd" inputmode="numeric">
+        </form>
         <div class="form-actions">
-          <button id="btnSalvar" class="btn-primary">Aceitar</button>
-          <button id="btnCancelar" class="btn-secondary">Cancelar</button>
+          <button id="btnSalvar" class="btn-primary" type="button">Aceitar</button>
+          <button id="btnCancelar" class="btn-secondary" type="button">Cancelar</button>
         </div>
       </div>
 
