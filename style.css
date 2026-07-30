@@ -413,3 +413,19 @@ header h1 {
   font-size: 13px;
   white-space: nowrap;
 }
+.btn-exportar {
+  width: 100%;
+  padding: 14px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.btn-exportar:active {
+  background: #047857;
+}
