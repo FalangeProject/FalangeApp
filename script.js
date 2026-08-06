@@ -211,6 +211,7 @@ function statusValidade(textoValidade) {
   }
   return { classe: '', texto: '' };
 }
+
 // ====================== CORREDOR ======================
 
 var lojaId = null;
