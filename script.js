@@ -188,6 +188,7 @@ function parseDataBR(texto) {
   }
   return data;
 }
+
 function statusValidade(textoValidade) {
   var data = parseDataBR(textoValidade);
   if (!data) return { classe: '', texto: '' };
