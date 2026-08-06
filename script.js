@@ -190,6 +190,7 @@ function parseDataBR(texto) {
 }
 
 function statusValidade(textoValidade) {
+function statusValidade(textoValidade) {
   var data = parseDataBR(textoValidade);
   if (!data) return { classe: '', texto: '' };
 
@@ -197,18 +198,22 @@ function statusValidade(textoValidade) {
   hoje.setHours(0, 0, 0, 0);
   data.setHours(0, 0, 0, 0);
 
-  var diffMs = data.getTime() - hoje.getTime();
-  var dias = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-  if (dias < 0) {
+  if (data.getTime() < hoje.getTime()) {
     return { classe: 'vencido', texto: 'VENCIDO' };
   }
-  if (dias === 0) {
+  if (data.getTime() === hoje.getTime()) {
     return { classe: 'vencido', texto: 'VENCE HOJE' };
   }
-  if (dias <= 31) {
+
+  // Limite = hoje + 1 mês (ex: 05/08 → 05/09)
+  var limite = new Date(hoje);
+  limite.setMonth(limite.getMonth() + 1);
+
+  if (data.getTime() <= limite.getTime()) {
+    var dias = Math.round((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     return { classe: 'proximo', texto: 'Vence em ' + dias + ' dia' + (dias === 1 ? '' : 's') };
   }
+
   return { classe: '', texto: '' };
 }
 
