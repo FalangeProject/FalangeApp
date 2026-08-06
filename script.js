@@ -188,8 +188,6 @@ function parseDataBR(texto) {
   }
   return data;
 }
-
-function statusValidade(textoValidade) {
 function statusValidade(textoValidade) {
   var data = parseDataBR(textoValidade);
   if (!data) return { classe: '', texto: '' };
@@ -205,7 +203,6 @@ function statusValidade(textoValidade) {
     return { classe: 'vencido', texto: 'VENCE HOJE' };
   }
 
-  // Limite = hoje + 1 mês (ex: 05/08 → 05/09)
   var limite = new Date(hoje);
   limite.setMonth(limite.getMonth() + 1);
 
