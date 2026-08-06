@@ -198,15 +198,19 @@ function statusValidade(textoValidade) {
   data.setHours(0, 0, 0, 0);
 
   var diffMs = data.getTime() - hoje.getTime();
-  var dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  var dias = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
   if (dias < 0) {
     return { classe: 'vencido', texto: 'VENCIDO' };
+  }
+  if (dias === 0) {
+    return { classe: 'vencido', texto: 'VENCE HOJE' };
   }
   if (dias <= 30) {
     return { classe: 'proximo', texto: 'Vence em ' + dias + ' dia' + (dias === 1 ? '' : 's') };
   }
   return { classe: '', texto: '' };
+}
 }
 
 // ====================== CORREDOR ======================
