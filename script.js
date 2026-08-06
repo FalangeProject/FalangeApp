@@ -209,6 +209,7 @@ function statusValidade(textoValidade) {
 
   if (data.getTime() <= limite.getTime()) {
     var dias = Math.round((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    if (dias > 30) dias = 30;
     return { classe: 'proximo', texto: 'Vence em ' + dias + ' dia' + (dias === 1 ? '' : 's') };
   }
 
