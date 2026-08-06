@@ -206,7 +206,7 @@ function statusValidade(textoValidade) {
   if (dias === 0) {
     return { classe: 'vencido', texto: 'VENCE HOJE' };
   }
-  if (dias <= 30) {
+  if (dias <= 31) {
     return { classe: 'proximo', texto: 'Vence em ' + dias + ' dia' + (dias === 1 ? '' : 's') };
   }
   return { classe: '', texto: '' };
