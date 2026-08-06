@@ -152,31 +152,89 @@ async function removerLoja(id, nome) {
   carregarLojas();
 }
 
+// ====================== VALIDADE (máscara + cálculo) ======================
+
+function aplicarMascaraData(input) {
+  if (!input) return;
+
+  input.addEventListener('input', function() {
+    var v = input.value.replace(/\D/g, '').slice(0, 8);
+    if (v.length >= 5) {
+      input.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+    } else if (v.length >= 3) {
+      input.value = v.slice(0, 2) + '/' + v.slice(2);
+    } else {
+      input.value = v;
+    }
+  });
+}
+
+function parseDataBR(texto) {
+  if (!texto) return null;
+  var partes = texto.trim().split('/');
+  if (partes.length !== 3) return null;
+
+  var dia = parseInt(partes[0], 10);
+  var mes = parseInt(partes[1], 10);
+  var ano = parseInt(partes[2], 10);
+
+  if (isNaN(dia) || isNaN(mes) || isNaN(ano)) return null;
+  if (ano < 100) ano += 2000;
+  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
+
+  var data = new Date(ano, mes - 1, dia);
+  if (data.getFullYear() !== ano || data.getMonth() !== mes - 1 || data.getDate() !== dia) {
+    return null;
+  }
+  return data;
+}
+
+function statusValidade(textoValidade) {
+  var data = parseDataBR(textoValidade);
+  if (!data) return { classe: '', texto: '' };
+
+  var hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  data.setHours(0, 0, 0, 0);
+
+  var diffMs = data.getTime() - hoje.getTime();
+  var dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (dias < 0) {
+    return { classe: 'vencido', texto: 'VENCIDO' };
+  }
+  if (dias <= 30) {
+    return { classe: 'proximo', texto: 'Vence em ' + dias + ' dia' + (dias === 1 ? '' : 's') };
+  }
+  return { classe: '', texto: '' };
+}
+
 // ====================== CORREDOR ======================
 
-let lojaId = null;
-let nomeLoja = '';
-let corredorAtual = null;
-let editandoId = null;
+var lojaId = null;
+var nomeLoja = '';
+var corredorAtual = null;
+var editandoId = null;
 
 async function initCorredorPage() {
-  const { data: { session } } = await sb.auth.getSession();
+  var sessionResult = await sb.auth.getSession();
+  var session = sessionResult.data.session;
   if (!session) {
     window.location.href = 'index.html';
     return;
   }
 
-  const params = new URLSearchParams(window.location.search);
+  var params = new URLSearchParams(window.location.search);
   lojaId = params.get('loja');
   nomeLoja = params.get('nome') || 'Loja';
-  const corredorParam = params.get('corredor');
+  var corredorParam = params.get('corredor');
 
   if (!lojaId) {
     window.location.href = 'dashboard.html';
     return;
   }
 
-  const backBtn = document.querySelector('.back-btn');
+  var backBtn = document.querySelector('.back-btn');
   if (backBtn) {
     if (corredorParam) {
       backBtn.href = 'corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja);
@@ -187,7 +245,7 @@ async function initCorredorPage() {
 
   setupSearch();
 
-  const btnExportar = document.getElementById('btnExportar');
+  var btnExportar = document.getElementById('btnExportar');
   if (btnExportar) {
     btnExportar.addEventListener('click', exportarPDF);
   }
@@ -201,7 +259,7 @@ async function initCorredorPage() {
     return;
   }
 
-  corredorAtual = parseInt(corredorParam);
+  corredorAtual = parseInt(corredorParam, 10);
   document.getElementById('tituloPagina').textContent = nomeLoja + ' - Corredor ' + corredorAtual;
   document.getElementById('secaoCorredores').classList.add('hidden');
   document.getElementById('secaoMercadorias').classList.remove('hidden');
@@ -213,15 +271,15 @@ async function initCorredorPage() {
 }
 
 function setupSearch() {
-  const input = document.getElementById('searchInput');
-  const btn = document.getElementById('searchBtn');
-  const resultsBox = document.getElementById('searchResults');
-  const secaoCorredores = document.getElementById('secaoCorredores');
+  var input = document.getElementById('searchInput');
+  var btn = document.getElementById('searchBtn');
+  var resultsBox = document.getElementById('searchResults');
+  var secaoCorredores = document.getElementById('secaoCorredores');
 
   if (!input || !btn) return;
 
   async function executarBusca() {
-    const termo = input.value.trim().toLowerCase();
+    var termo = input.value.trim().toLowerCase();
 
     if (!termo) {
       resultsBox.classList.add('hidden');
@@ -230,17 +288,16 @@ function setupSearch() {
     }
 
     if (/^\d+$/.test(termo)) {
-      const num = parseInt(termo, 10);
+      var num = parseInt(termo, 10);
       if (num >= 1 && num <= 60) {
         window.location.href = 'corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + num;
         return;
       }
     }
 
-    const { data, error } = await sb
-      .from('mercadorias')
-      .select('*')
-      .eq('loja_id', lojaId);
+    var result = await sb.from('mercadorias').select('*').eq('loja_id', lojaId);
+    var data = result.data;
+    var error = result.error;
 
     if (error || !data) {
       resultsBox.innerHTML = '<h3>Erro ao buscar</h3>';
@@ -249,7 +306,7 @@ function setupSearch() {
       return;
     }
 
-    const resultados = data.filter(function(item) {
+    var resultados = data.filter(function(item) {
       return item.nome && item.nome.toLowerCase().indexOf(termo) !== -1;
     });
 
@@ -260,15 +317,16 @@ function setupSearch() {
     if (resultados.length === 0) {
       resultsBox.innerHTML = '<h3>Nenhum resultado para "' + input.value + '"</h3>';
     } else {
-      let html = '<h3>Resultados (' + resultados.length + ')</h3>';
+      var html = '<h3>Resultados (' + resultados.length + ')</h3>';
       resultados.forEach(function(r) {
+        var st = statusValidade(r.validade);
         html += '<div class="result-item">';
         html += '<div class="info">';
         html += '<div class="nome">' + r.nome + '</div>';
         html += '<div class="corredor-tag">Corredor ' + r.corredor + '</div>';
         html += '<div class="qtd">' + r.quantidade + ' palete' + (Number(r.quantidade) > 1 ? 's' : '') + '</div>';
         if (r.validade) {
-          html += '<div class="qtd">Validade: ' + r.validade + '</div>';
+          html += '<div class="qtd">Validade: ' + r.validade + (st.texto ? ' — ' + st.texto : '') + '</div>';
         }
         html += '</div>';
         html += '<a href="corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + r.corredor + '">Abrir</a>';
@@ -282,11 +340,9 @@ function setupSearch() {
   }
 
   btn.addEventListener('click', executarBusca);
-
   input.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') executarBusca();
   });
-
   input.addEventListener('input', function() {
     if (input.value.trim() === '') {
       resultsBox.classList.add('hidden');
@@ -296,47 +352,44 @@ function setupSearch() {
 }
 
 async function renderCorredores() {
-  const container = document.getElementById('corredoresGrupos');
+  var container = document.getElementById('corredoresGrupos');
   if (!container) return;
 
-  const { data } = await sb
-    .from('mercadorias')
-    .select('corredor')
-    .eq('loja_id', lojaId);
+  var result = await sb.from('mercadorias').select('corredor').eq('loja_id', lojaId);
+  var data = result.data;
 
-  const corredoresComItens = {};
+  var corredoresComItens = {};
   if (data) {
     data.forEach(function(item) {
       corredoresComItens[item.corredor] = true;
     });
   }
 
-  let html = '';
-  for (let inicio = 1; inicio <= 60; inicio += 10) {
-    const fim = Math.min(inicio + 9, 60);
+  var html = '';
+  for (var inicio = 1; inicio <= 60; inicio += 10) {
+    var fim = Math.min(inicio + 9, 60);
     html += '<div class="grupo"><h3>Corredores ' + inicio + ' a ' + fim + '</h3><div class="botoes-corredor">';
-
-    for (let i = inicio; i <= fim; i++) {
-      const temItens = corredoresComItens[i] ? 'has-items' : '';
+    for (var i = inicio; i <= fim; i++) {
+      var temItens = corredoresComItens[i] ? 'has-items' : '';
       html += '<a href="corredor.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja) + '&corredor=' + i + '" class="' + temItens + '">' + i + '</a>';
     }
-
     html += '</div></div>';
   }
-
   container.innerHTML = html;
 }
 
 async function renderLista() {
-  const { data, error } = await sb
+  var result = await sb
     .from('mercadorias')
     .select('*')
     .eq('loja_id', lojaId)
     .eq('corredor', corredorAtual)
     .order('nome');
 
-  const container = document.getElementById('listaMercadorias');
-  const msgVazio = document.getElementById('msgVazio');
+  var data = result.data;
+  var error = result.error;
+  var container = document.getElementById('listaMercadorias');
+  var msgVazio = document.getElementById('msgVazio');
 
   if (error || !data || data.length === 0) {
     container.innerHTML = '';
@@ -346,14 +399,20 @@ async function renderLista() {
 
   msgVazio.classList.add('hidden');
 
-  let html = '';
+  var html = '';
   data.forEach(function(item) {
-    html += '<div class="item-card">';
+    var st = statusValidade(item.validade);
+    var classeCard = st.classe ? (' ' + st.classe) : '';
+
+    html += '<div class="item-card' + classeCard + '">';
     html += '<div class="info">';
     html += '<div class="nome">' + item.nome + '</div>';
     html += '<div class="qtd">' + item.quantidade + ' palete' + (item.quantidade > 1 ? 's' : '') + '</div>';
     if (item.validade) {
       html += '<div class="qtd">Validade: ' + item.validade + '</div>';
+      if (st.texto) {
+        html += '<div class="validade-alerta">' + st.texto + '</div>';
+      }
     }
     html += '</div>';
     html += '<div class="item-actions">';
@@ -368,8 +427,11 @@ async function renderLista() {
 }
 
 function setupFormulario() {
-  const formBox = document.getElementById('formBox');
-  const btnAdicionar = document.getElementById('btnAdicionar');
+  var formBox = document.getElementById('formBox');
+  var btnAdicionar = document.getElementById('btnAdicionar');
+  var inputValidade = document.getElementById('inputValidade');
+
+  aplicarMascaraData(inputValidade);
 
   btnAdicionar.addEventListener('click', function() {
     editandoId = null;
@@ -385,12 +447,17 @@ function setupFormulario() {
   });
 
   document.getElementById('btnSalvar').addEventListener('click', async function() {
-    const nome = document.getElementById('inputNome').value.trim();
-    const validade = document.getElementById('inputValidade').value.trim();
-    const qtd = parseInt(document.getElementById('inputQtd').value) || 1;
+    var nome = document.getElementById('inputNome').value.trim();
+    var validade = document.getElementById('inputValidade').value.trim();
+    var qtd = parseInt(document.getElementById('inputQtd').value, 10) || 1;
 
     if (!nome) {
       alert('Digite o nome da mercadoria');
+      return;
+    }
+
+    if (validade && !parseDataBR(validade)) {
+      alert('Data de validade inválida. Use o formato DD/MM/AAAA');
       return;
     }
 
@@ -417,7 +484,8 @@ function setupFormulario() {
 }
 
 async function editarItem(id) {
-  const { data } = await sb.from('mercadorias').select('*').eq('id', id).single();
+  var result = await sb.from('mercadorias').select('*').eq('id', id).single();
+  var data = result.data;
   if (!data) return;
 
   editandoId = id;
@@ -435,10 +503,10 @@ async function removerItem(id) {
 }
 
 async function moverItem(id) {
-  const novo = prompt('Para qual corredor deseja mover? (1 a 60)');
+  var novo = prompt('Para qual corredor deseja mover? (1 a 60)');
   if (!novo) return;
 
-  const destino = parseInt(novo);
+  var destino = parseInt(novo, 10);
   if (isNaN(destino) || destino < 1 || destino > 60) {
     alert('Número inválido');
     return;
@@ -456,33 +524,34 @@ async function moverItem(id) {
 // ====================== EXPORTAR PDF ======================
 
 async function exportarPDF() {
-  const btn = document.getElementById('btnExportar');
+  var btn = document.getElementById('btnExportar');
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Gerando PDF...';
   }
 
   try {
-    const { data, error } = await sb
+    var result = await sb
       .from('mercadorias')
       .select('*')
       .eq('loja_id', lojaId)
       .order('corredor')
       .order('nome');
 
+    var data = result.data;
+    var error = result.error;
+
     if (error) {
       alert('Erro ao buscar dados: ' + error.message);
       return;
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    const dataAtual = new Date().toLocaleString('pt-BR');
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF();
+    var dataAtual = new Date().toLocaleString('pt-BR');
 
     doc.setFontSize(16);
     doc.text('Falange - Controle de Paletes', 14, 18);
-
     doc.setFontSize(12);
     doc.text('Loja: ' + nomeLoja, 14, 28);
     doc.text('Exportado em: ' + dataAtual, 14, 36);
@@ -491,27 +560,28 @@ async function exportarPDF() {
       doc.setFontSize(11);
       doc.text('Nenhuma mercadoria cadastrada nesta loja.', 14, 50);
     } else {
-      const rows = data.map(function(item) {
+      var rows = data.map(function(item) {
+        var st = statusValidade(item.validade);
         return [
           String(item.corredor),
           item.nome,
           item.validade || '-',
+          st.texto || '-',
           String(item.quantidade)
         ];
       });
 
       doc.autoTable({
         startY: 45,
-        head: [['Corredor', 'Mercadoria', 'Validade', 'Qtd.']],
+        head: [['Corredor', 'Mercadoria', 'Validade', 'Status', 'Qtd.']],
         body: rows,
-        styles: { fontSize: 9 },
+        styles: { fontSize: 8 },
         headStyles: { fillColor: [37, 99, 235] }
       });
     }
 
-    const nomeArquivo = 'Falange_' + nomeLoja.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+    var nomeArquivo = 'Falange_' + nomeLoja.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
     doc.save(nomeArquivo);
-
   } catch (e) {
     console.error(e);
     alert('Erro ao gerar o PDF. Tente novamente.');
