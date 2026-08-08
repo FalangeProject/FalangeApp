@@ -467,3 +467,23 @@ header h1 {
 .btn-brigada:active {
   background: #6d28d9;
 }
+.loading {
+  text-align: center;
+  padding: 30px 16px;
+  color: #666;
+  font-size: 15px;
+}
+
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  margin: 0 auto 12px auto;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
