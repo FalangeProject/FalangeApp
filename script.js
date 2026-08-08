@@ -152,7 +152,7 @@ async function removerLoja(id, nome) {
   carregarLojas();
 }
 
-// ====================== VALIDADE (máscara + cálculo) ======================
+// ====================== VALIDADE ======================
 
 function aplicarMascaraData(input) {
   if (!input) return;
@@ -263,6 +263,12 @@ async function initCorredorPage() {
     document.getElementById('secaoMercadorias').classList.add('hidden');
     document.getElementById('searchBox').classList.remove('hidden');
     renderCorredores();
+
+    var btnBrigada = document.getElementById('btnMinhaBrigada');
+    if (btnBrigada) {
+      btnBrigada.href = 'brigada.html?loja=' + lojaId + '&nome=' + encodeURIComponent(nomeLoja);
+    }
+
     return;
   }
 
@@ -528,7 +534,7 @@ async function moverItem(id) {
   alert('Mercadoria movida para o corredor ' + destino);
 }
 
-// ====================== EXPORTAR PDF ======================
+// ====================== EXPORTAR PDF CORREDOR ======================
 
 async function exportarPDF() {
   var btn = document.getElementById('btnExportar');
@@ -599,6 +605,7 @@ async function exportarPDF() {
     }
   }
 }
+
 // ====================== BRIGADA ======================
 
 var brigadaLojaId = null;
