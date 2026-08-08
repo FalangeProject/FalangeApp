@@ -599,3 +599,234 @@ async function exportarPDF() {
     }
   }
 }
+// ====================== BRIGADA ======================
+
+var brigadaLojaId = null;
+var brigadaNomeLoja = '';
+var editandoBrigadaId = null;
+
+async function initBrigadaPage() {
+  var sessionResult = await sb.auth.getSession();
+  var session = sessionResult.data.session;
+  if (!session) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  brigadaLojaId = params.get('loja');
+  brigadaNomeLoja = params.get('nome') || 'Loja';
+
+  if (!brigadaLojaId) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  document.getElementById('tituloBrigada').textContent = 'Brigada - ' + brigadaNomeLoja;
+
+  var btnVoltar = document.getElementById('btnVoltarBrigada');
+  if (btnVoltar) {
+    btnVoltar.href = 'corredor.html?loja=' + brigadaLojaId + '&nome=' + encodeURIComponent(brigadaNomeLoja);
+  }
+
+  document.getElementById('btnExportarBrigada').addEventListener('click', exportarPDFBrigada);
+  setupFormularioBrigada();
+  renderListaBrigada();
+}
+
+function setupFormularioBrigada() {
+  var formBox = document.getElementById('formBrigada');
+  var btnAdicionar = document.getElementById('btnAdicionarBrigada');
+  var inputValidade = document.getElementById('inputValidadeBrigada');
+
+  aplicarMascaraData(inputValidade);
+
+  btnAdicionar.addEventListener('click', function() {
+    editandoBrigadaId = null;
+    document.getElementById('formTitleBrigada').textContent = 'Novo produto';
+    document.getElementById('inputCodigo').value = '';
+    document.getElementById('inputNomeBrigada').value = '';
+    document.getElementById('inputValidadeBrigada').value = '';
+    document.getElementById('inputQtdBrigada').value = '1';
+    formBox.classList.remove('hidden');
+  });
+
+  document.getElementById('btnCancelarBrigada').addEventListener('click', function() {
+    formBox.classList.add('hidden');
+  });
+
+  document.getElementById('btnSalvarBrigada').addEventListener('click', async function() {
+    var codigo = document.getElementById('inputCodigo').value.trim();
+    var nome = document.getElementById('inputNomeBrigada').value.trim();
+    var validade = document.getElementById('inputValidadeBrigada').value.trim();
+    var qtd = parseInt(document.getElementById('inputQtdBrigada').value, 10) || 1;
+
+    if (!nome) {
+      alert('Digite o nome do produto');
+      return;
+    }
+
+    if (validade && !parseDataBR(validade)) {
+      alert('Data de validade inválida. Use o formato DD/MM/AAAA');
+      return;
+    }
+
+    if (editandoBrigadaId) {
+      await sb.from('brigada').update({
+        codigo: codigo || null,
+        nome: nome,
+        validade: validade || null,
+        quantidade: qtd
+      }).eq('id', editandoBrigadaId);
+    } else {
+      await sb.from('brigada').insert({
+        loja_id: brigadaLojaId,
+        codigo: codigo || null,
+        nome: nome,
+        validade: validade || null,
+        quantidade: qtd
+      });
+    }
+
+    formBox.classList.add('hidden');
+    renderListaBrigada();
+  });
+}
+
+async function renderListaBrigada() {
+  var result = await sb
+    .from('brigada')
+    .select('*')
+    .eq('loja_id', brigadaLojaId)
+    .order('nome');
+
+  var data = result.data;
+  var error = result.error;
+  var container = document.getElementById('listaBrigada');
+  var msgVazio = document.getElementById('msgVazioBrigada');
+
+  if (error || !data || data.length === 0) {
+    container.innerHTML = '';
+    msgVazio.classList.remove('hidden');
+    return;
+  }
+
+  msgVazio.classList.add('hidden');
+
+  var html = '';
+  data.forEach(function(item) {
+    var st = statusValidade(item.validade);
+    var classeCard = st.classe ? (' ' + st.classe) : '';
+
+    html += '<div class="item-card' + classeCard + '">';
+    html += '<div class="info">';
+    html += '<div class="nome">' + item.nome + '</div>';
+    if (item.codigo) {
+      html += '<div class="qtd">Código: ' + item.codigo + '</div>';
+    }
+    html += '<div class="qtd">Qtd: ' + item.quantidade + '</div>';
+    if (item.validade) {
+      html += '<div class="qtd">Validade: ' + item.validade + '</div>';
+      if (st.texto) {
+        html += '<div class="validade-alerta">' + st.texto + '</div>';
+      }
+    }
+    html += '</div>';
+    html += '<div class="item-actions">';
+    html += '<button class="btn-edit" onclick="editarBrigada(\'' + item.id + '\')">✍🏻</button>';
+    html += '<button class="btn-delete" onclick="removerBrigada(\'' + item.id + '\')">🗑️</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+async function editarBrigada(id) {
+  var result = await sb.from('brigada').select('*').eq('id', id).single();
+  var data = result.data;
+  if (!data) return;
+
+  editandoBrigadaId = id;
+  document.getElementById('formTitleBrigada').textContent = 'Editar produto';
+  document.getElementById('inputCodigo').value = data.codigo || '';
+  document.getElementById('inputNomeBrigada').value = data.nome;
+  document.getElementById('inputValidadeBrigada').value = data.validade || '';
+  document.getElementById('inputQtdBrigada').value = data.quantidade;
+  document.getElementById('formBrigada').classList.remove('hidden');
+}
+
+async function removerBrigada(id) {
+  if (!confirm('Remover este produto da brigada?')) return;
+  await sb.from('brigada').delete().eq('id', id);
+  renderListaBrigada();
+}
+
+async function exportarPDFBrigada() {
+  var btn = document.getElementById('btnExportarBrigada');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Gerando PDF...';
+  }
+
+  try {
+    var result = await sb
+      .from('brigada')
+      .select('*')
+      .eq('loja_id', brigadaLojaId)
+      .order('nome');
+
+    var data = result.data;
+    var error = result.error;
+
+    if (error) {
+      alert('Erro ao buscar dados: ' + error.message);
+      return;
+    }
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF();
+    var dataAtual = new Date().toLocaleString('pt-BR');
+
+    doc.setFontSize(16);
+    doc.text('Falange - Brigada de Validade', 14, 18);
+    doc.setFontSize(12);
+    doc.text('Loja: ' + brigadaNomeLoja, 14, 28);
+    doc.text('Exportado em: ' + dataAtual, 14, 36);
+
+    if (!data || data.length === 0) {
+      doc.setFontSize(11);
+      doc.text('Nenhum produto na brigada desta loja.', 14, 50);
+    } else {
+      var rows = data.map(function(item) {
+        var st = statusValidade(item.validade);
+        return [
+          item.codigo || '-',
+          item.nome,
+          item.validade || '-',
+          st.texto || '-',
+          String(item.quantidade)
+        ];
+      });
+
+      doc.autoTable({
+        startY: 45,
+        head: [['Código', 'Produto', 'Validade', 'Status', 'Qtd.']],
+        body: rows,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [124, 58, 237] }
+      });
+    }
+
+    var nomeArquivo = 'Brigada_' + brigadaNomeLoja.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+    doc.save(nomeArquivo);
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao gerar o PDF. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📄 Exportar PDF';
+    }
+  }
+}
