@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minha Brigada - Falange</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a href="#" class="back-btn" id="btnVoltarBrigada">← Voltar</a>
+      <h1 id="tituloBrigada">Minha Brigada</h1>
+    </header>
+
+    <button id="btnExportarBrigada" class="btn-exportar">📄 Exportar PDF</button>
+    <button id="btnAdicionarBrigada" class="btn-primary">➕ Adicionar produto</button>
+
+    <div id="formBrigada" class="form-box hidden">
+      <h3 id="formTitleBrigada">Novo produto</h3>
+      <input type="text" id="inputCodigo" placeholder="Código do produto (opcional)" autocomplete="off" name="falange-codigo">
+      <input type="text" id="inputNomeBrigada" placeholder="Nome do produto" maxlength="100" autocomplete="off" name="falange-nome-brigada">
+      <input type="text" id="inputValidadeBrigada" placeholder="DD/MM/AAAA (opcional)" maxlength="10" autocomplete="off" name="falange-validade-brigada" inputmode="numeric">
+      <input type="number" id="inputQtdBrigada" placeholder="Quantidade" min="1" value="1" autocomplete="off" name="falange-qtd-brigada" inputmode="numeric">
+      <div class="form-actions">
+        <button id="btnSalvarBrigada" class="btn-primary" type="button">Aceitar</button>
+        <button id="btnCancelarBrigada" class="btn-secondary" type="button">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="listaBrigada" class="lista-mercadorias"></div>
+    <p id="msgVazioBrigada" class="msg-vazio hidden">Nenhum produto na brigada desta loja.</p>
+
+    <p class="credito">Criado por Gabryel Canário</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      initBrigadaPage();
+    });
+  </script>
+</body>
+</html>
