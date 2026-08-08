@@ -448,3 +448,22 @@ header h1 {
 .item-card.proximo .validade-alerta {
   color: #a16207;
 }
+.btn-brigada {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn-brigada:active {
+  background: #6d28d9;
+}
