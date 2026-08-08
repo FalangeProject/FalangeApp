@@ -219,6 +219,51 @@ function statusValidade(textoValidade) {
   return { classe: '', texto: '' };
 }
 
+async function verificarAlertaLoja() {
+  var box = document.getElementById('alertaValidadeLoja');
+  if (!box || !lojaId) return;
+
+  var vencidos = 0;
+  var proximos = 0;
+
+  var r1 = await sb.from('mercadorias').select('validade').eq('loja_id', lojaId);
+  if (r1.data) {
+    r1.data.forEach(function(item) {
+      var st = statusValidade(item.validade);
+      if (st.classe === 'vencido') vencidos++;
+      if (st.classe === 'proximo') proximos++;
+    });
+  }
+
+  var r2 = await sb.from('brigada').select('validade').eq('loja_id', lojaId);
+  if (r2.data) {
+    r2.data.forEach(function(item) {
+      var st = statusValidade(item.validade);
+      if (st.classe === 'vencido') vencidos++;
+      if (st.classe === 'proximo') proximos++;
+    });
+  }
+
+  if (vencidos === 0 && proximos === 0) {
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+
+  var partes = [];
+  if (vencidos > 0) partes.push(vencidos + ' produto(s) vencido(s)');
+  if (proximos > 0) partes.push(proximos + ' perto de vencer');
+
+  box.innerHTML = '⚠️ Você tem ' + partes.join(' e ');
+  box.classList.remove('hidden');
+
+  if (vencidos > 0) {
+    box.classList.add('critico');
+  } else {
+    box.classList.remove('critico');
+  }
+}
+
 // ====================== CORREDOR ======================
 
 var lojaId = null;
@@ -266,6 +311,7 @@ async function initCorredorPage() {
     document.getElementById('secaoMercadorias').classList.add('hidden');
     document.getElementById('searchBox').classList.remove('hidden');
     renderCorredores();
+    verificarAlertaLoja();
 
     var btnBrigada = document.getElementById('btnMinhaBrigada');
     if (btnBrigada) {
