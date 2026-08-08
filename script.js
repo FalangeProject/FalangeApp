@@ -220,47 +220,62 @@ function statusValidade(textoValidade) {
 }
 
 async function verificarAlertaLoja() {
-  var box = document.getElementById('alertaValidadeLoja');
-  if (!box || !lojaId) return;
+  var boxPaletes = document.getElementById('alertaPaletes');
+  var boxBrigada = document.getElementById('alertaBrigada');
+  if (!lojaId) return;
 
-  var vencidos = 0;
-  var proximos = 0;
+  var vencidosPaletes = 0;
+  var proximosPaletes = 0;
 
   var r1 = await sb.from('mercadorias').select('validade').eq('loja_id', lojaId);
   if (r1.data) {
     r1.data.forEach(function(item) {
       var st = statusValidade(item.validade);
-      if (st.classe === 'vencido') vencidos++;
-      if (st.classe === 'proximo') proximos++;
+      if (st.classe === 'vencido') vencidosPaletes++;
+      if (st.classe === 'proximo') proximosPaletes++;
     });
   }
+
+  if (boxPaletes) {
+    if (vencidosPaletes === 0 && proximosPaletes === 0) {
+      boxPaletes.classList.add('hidden');
+      boxPaletes.innerHTML = '';
+    } else {
+      var partesP = [];
+      if (vencidosPaletes > 0) partesP.push(vencidosPaletes + ' palete(s) vencido(s)');
+      if (proximosPaletes > 0) partesP.push(proximosPaletes + ' palete(s) perto de vencer');
+      boxPaletes.innerHTML = '⚠️ Você tem ' + partesP.join(' e ');
+      boxPaletes.classList.remove('hidden');
+      if (vencidosPaletes > 0) boxPaletes.classList.add('critico');
+      else boxPaletes.classList.remove('critico');
+    }
+  }
+
+  var vencidosBrigada = 0;
+  var proximosBrigada = 0;
 
   var r2 = await sb.from('brigada').select('validade').eq('loja_id', lojaId);
   if (r2.data) {
     r2.data.forEach(function(item) {
       var st = statusValidade(item.validade);
-      if (st.classe === 'vencido') vencidos++;
-      if (st.classe === 'proximo') proximos++;
+      if (st.classe === 'vencido') vencidosBrigada++;
+      if (st.classe === 'proximo') proximosBrigada++;
     });
   }
 
-  if (vencidos === 0 && proximos === 0) {
-    box.classList.add('hidden');
-    box.innerHTML = '';
-    return;
-  }
-
-  var partes = [];
-  if (vencidos > 0) partes.push(vencidos + ' produto(s) vencido(s)');
-  if (proximos > 0) partes.push(proximos + ' perto de vencer');
-
-  box.innerHTML = '⚠️ Você tem ' + partes.join(' e ');
-  box.classList.remove('hidden');
-
-  if (vencidos > 0) {
-    box.classList.add('critico');
-  } else {
-    box.classList.remove('critico');
+  if (boxBrigada) {
+    if (vencidosBrigada === 0 && proximosBrigada === 0) {
+      boxBrigada.classList.add('hidden');
+      boxBrigada.innerHTML = '';
+    } else {
+      var partesB = [];
+      if (vencidosBrigada > 0) partesB.push(vencidosBrigada + ' item(ns) vencido(s)');
+      if (proximosBrigada > 0) partesB.push(proximosBrigada + ' item(ns) perto de vencer');
+      boxBrigada.innerHTML = '🛡️ Você tem ' + partesB.join(' e ') + ' na brigada';
+      boxBrigada.classList.remove('hidden');
+      if (vencidosBrigada > 0) boxBrigada.classList.add('critico');
+      else boxBrigada.classList.remove('critico');
+    }
   }
 }
 
