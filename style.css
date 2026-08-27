@@ -504,3 +504,166 @@ header h1 {
   border-color: #fca5a5;
   color: #991b1b;
 }
+.btn-quebras {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #d97706;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.btn-quebras:active {
+  background: #b45309;
+}
+
+.container-wide {
+  max-width: 900px;
+}
+
+.quebra-loja {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.quebra-loja-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: #fff7ed;
+  border-bottom: 1px solid #fed7aa;
+}
+
+.quebra-loja-header .nome {
+  flex: 1;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.quebra-loja-header .seta {
+  font-size: 12px;
+  color: #9a3412;
+}
+
+.quebra-loja-body {
+  display: none;
+  padding: 12px;
+}
+
+.quebra-loja.aberta .quebra-loja-body {
+  display: block;
+}
+
+.quebra-loja.aberta .quebra-loja-header .seta {
+  transform: rotate(90deg);
+}
+
+.tabela-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 10px;
+}
+
+.tabela-quebra {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+  font-size: 13px;
+}
+
+.tabela-quebra th {
+  background: #ffedd5;
+  color: #9a3412;
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabela-quebra td {
+  padding: 6px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.tabela-quebra input {
+  width: 100%;
+  padding: 8px 6px;
+  font-size: 13px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.tabela-quebra input:focus {
+  border-color: #d97706;
+}
+
+.tabela-quebra .col-produto { min-width: 140px; }
+.tabela-quebra .col-num { min-width: 90px; }
+.tabela-quebra .col-acoes { width: 70px; white-space: nowrap; }
+
+.btn-linha {
+  border: none;
+  background: #fee2e2;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.totais-loja {
+  background: #fffbeb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 10px;
+}
+
+.quebra-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quebra-acoes button,
+.quebra-acoes .btn-mini {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-add-linha { background: #2563eb; color: white; }
+.btn-pdf-loja { background: #059669; color: white; }
+.btn-del-loja-quebra { background: #fee2e2; color: #b91c1c; }
+
+.total-geral-box {
+  background: #1f2937;
+  color: white;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
