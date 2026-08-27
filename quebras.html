@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quebras e Rupturas - Falange</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container container-wide">
+    <header>
+      <a href="dashboard.html" class="back-btn">← Voltar</a>
+      <h1>Quebras e Rupturas</h1>
+    </header>
+
+    <button id="btnNovaLojaQuebra" class="btn-primary">➕ Nova loja</button>
+    <button id="btnPdfGeralQuebras" class="btn-exportar">📄 Exportar PDF geral</button>
+
+    <div id="formNovaLojaQuebra" class="form-box hidden">
+      <input type="text" id="nomeLojaQuebra" placeholder="Nome da loja" maxlength="80" autocomplete="off">
+      <div class="form-actions">
+        <button id="btnSalvarLojaQuebra" class="btn-primary" type="button">Criar</button>
+        <button id="btnCancelarLojaQuebra" class="btn-secondary" type="button">Cancelar</button>
+      </div>
+    </div>
+
+    <div id="listaQuebrasLojas"></div>
+    <p id="msgVazioQuebras" class="msg-vazio hidden">Nenhuma loja cadastrada ainda.</p>
+
+    <div id="totalGeralQuebras" class="total-geral-box hidden"></div>
+
+    <p class="credito">Criado por Gabryel Canário</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      initQuebrasPage();
+    });
+  </script>
+</body>
+</html>
