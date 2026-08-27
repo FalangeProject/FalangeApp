@@ -911,3 +911,391 @@ async function exportarPDFBrigada() {
     }
   }
 }
+// ====================== QUEBRAS E AVARIAS ======================
+
+async function initQuebrasPage() {
+  var sessionResult = await sb.auth.getSession();
+  if (!sessionResult.data.session) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  document.getElementById('btnNovaLojaQuebra').addEventListener('click', function() {
+    document.getElementById('formNovaLojaQuebra').classList.remove('hidden');
+    document.getElementById('nomeLojaQuebra').focus();
+  });
+
+  document.getElementById('btnCancelarLojaQuebra').addEventListener('click', function() {
+    document.getElementById('formNovaLojaQuebra').classList.add('hidden');
+  });
+
+  document.getElementById('btnSalvarLojaQuebra').addEventListener('click', salvarLojaQuebra);
+  document.getElementById('btnPdfGeralQuebras').addEventListener('click', exportarPDFQuebrasGeral);
+
+  carregarQuebrasLojas();
+}
+
+async function salvarLojaQuebra() {
+  var sessionResult = await sb.auth.getSession();
+  var session = sessionResult.data.session;
+  var nome = document.getElementById('nomeLojaQuebra').value.trim();
+  if (!nome) {
+    alert('Digite o nome da loja');
+    return;
+  }
+
+  var result = await sb.from('quebras_lojas').insert({
+    nome: nome,
+    user_id: session.user.id
+  });
+
+  if (result.error) {
+    alert('Erro ao criar loja: ' + result.error.message);
+    return;
+  }
+
+  document.getElementById('formNovaLojaQuebra').classList.add('hidden');
+  document.getElementById('nomeLojaQuebra').value = '';
+  carregarQuebrasLojas();
+}
+
+async function carregarQuebrasLojas() {
+  var container = document.getElementById('listaQuebrasLojas');
+  var msg = document.getElementById('msgVazioQuebras');
+  var totalBox = document.getElementById('totalGeralQuebras');
+
+  container.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Carregando...</div>';
+
+  var lojasResult = await sb.from('quebras_lojas').select('*').order('created_at', { ascending: true });
+  var lojas = lojasResult.data || [];
+
+  if (lojasResult.error || lojas.length === 0) {
+    container.innerHTML = '';
+    msg.classList.remove('hidden');
+    totalBox.classList.add('hidden');
+    return;
+  }
+
+  msg.classList.add('hidden');
+
+  var itensResult = await sb.from('quebras_itens').select('*').order('created_at', { ascending: true });
+  var itens = itensResult.data || [];
+
+  var itensPorLoja = {};
+  itens.forEach(function(item) {
+    if (!itensPorLoja[item.loja_id]) itensPorLoja[item.loja_id] = [];
+    itensPorLoja[item.loja_id].push(item);
+  });
+
+  var somaReqGeral = 0;
+  var somaPerdasGeral = 0;
+  var somaSepGeral = 0;
+  var html = '';
+
+  lojas.forEach(function(loja) {
+    var lista = itensPorLoja[loja.id] || [];
+    var totSep = 0;
+    var totReq = 0;
+    var totPer = 0;
+
+    lista.forEach(function(item) {
+      totSep += parseNumeroQuebra(item.separados);
+      totReq += parseNumeroQuebra(item.requalificacao);
+      totPer += parseNumeroQuebra(item.perdas);
+    });
+
+    somaSepGeral += totSep;
+    somaReqGeral += totReq;
+    somaPerdasGeral += totPer;
+
+    html += '<div class="quebra-loja" id="quebra-loja-' + loja.id + '">';
+    html += '<div class="quebra-loja-header" onclick="toggleQuebraLoja(\'' + loja.id + '\')">';
+    html += '<span class="seta">▶</span>';
+    html += '<span class="nome">' + escapeHtml(loja.nome) + '</span>';
+    html += '</div>';
+    html += '<div class="quebra-loja-body">';
+    html += '<div class="tabela-wrap"><table class="tabela-quebra"><thead><tr>';
+    html += '<th class="col-produto">Produto</th>';
+    html += '<th class="col-num">Separados</th>';
+    html += '<th class="col-num">Requalificação</th>';
+    html += '<th class="col-num">Perdas</th>';
+    html += '<th class="col-num">Total</th>';
+    html += '<th class="col-acoes"></th>';
+    html += '</tr></thead><tbody id="tbody-' + loja.id + '">';
+
+    if (lista.length === 0) {
+      html += '<tr><td colspan="6" style="color:#888;text-align:center;padding:12px;">Nenhum item. Clique em Adicionar linha.</td></tr>';
+    } else {
+      lista.forEach(function(item) {
+        html += linhaQuebraHtml(item);
+      });
+    }
+
+    html += '</tbody></table></div>';
+    html += '<div class="totais-loja">Totais da loja — Separados: ' + totSep + ' | Requalificação: ' + totReq + ' | Perdas: ' + totPer + '</div>';
+    html += '<div class="quebra-acoes">';
+    html += '<button class="btn-add-linha" type="button" onclick="adicionarLinhaQuebra(\'' + loja.id + '\')">➕ Adicionar linha</button>';
+    html += '<button class="btn-pdf-loja" type="button" onclick="exportarPDFQuebraLoja(\'' + loja.id + '\', \'' + escapeAttr(loja.nome) + '\')">📄 PDF desta loja</button>';
+    html += '<button class="btn-del-loja-quebra" type="button" onclick="removerLojaQuebra(\'' + loja.id + '\', \'' + escapeAttr(loja.nome) + '\')">🗑️ Excluir loja</button>';
+    html += '</div>';
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+
+  totalBox.innerHTML = 'TOTAL GERAL<br>Separados: ' + somaSepGeral + ' &nbsp;|&nbsp; Requalificação: ' + somaReqGeral + ' &nbsp;|&nbsp; Perdas: ' + somaPerdasGeral;
+  totalBox.classList.remove('hidden');
+}
+
+function parseNumeroQuebra(v) {
+  if (!v) return 0;
+  var n = parseFloat(String(v).replace(',', '.').replace(/[^\d.-]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeAttr(str) {
+  return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function linhaQuebraHtml(item) {
+  var html = '<tr data-id="' + item.id + '">';
+  html += '<td class="col-produto"><input type="text" value="' + escapeHtml(item.produto || '') + '" onchange="salvarCampoQuebra(\'' + item.id + '\', \'produto\', this.value)" placeholder="Produto"></td>';
+  html += '<td class="col-num"><input type="text" inputmode="numeric" value="' + escapeHtml(item.separados || '') + '" onchange="salvarCampoQuebra(\'' + item.id + '\', \'separados\', this.value)" placeholder="0"></td>';
+  html += '<td class="col-num"><input type="text" inputmode="numeric" value="' + escapeHtml(item.requalificacao || '') + '" onchange="salvarCampoQuebra(\'' + item.id + '\', \'requalificacao\', this.value)" placeholder="0"></td>';
+  html += '<td class="col-num"><input type="text" inputmode="numeric" value="' + escapeHtml(item.perdas || '') + '" onchange="salvarCampoQuebra(\'' + item.id + '\', \'perdas\', this.value)" placeholder="0"></td>';
+  html += '<td class="col-num"><input type="text" inputmode="numeric" value="' + escapeHtml(item.total || '') + '" onchange="salvarCampoQuebra(\'' + item.id + '\', \'total\', this.value)" placeholder="0"></td>';
+  html += '<td class="col-acoes"><button class="btn-linha" type="button" onclick="removerLinhaQuebra(\'' + item.id + '\')">🗑️</button></td>';
+  html += '</tr>';
+  return html;
+}
+
+function toggleQuebraLoja(id) {
+  var el = document.getElementById('quebra-loja-' + id);
+  if (el) el.classList.toggle('aberta');
+}
+
+async function adicionarLinhaQuebra(lojaId) {
+  var result = await sb.from('quebras_itens').insert({
+    loja_id: lojaId,
+    produto: '',
+    separados: '',
+    requalificacao: '',
+    perdas: '',
+    total: ''
+  }).select().single();
+
+  if (result.error) {
+    alert('Erro ao adicionar linha: ' + result.error.message);
+    return;
+  }
+
+  carregarQuebrasLojas().then(function() {
+    var el = document.getElementById('quebra-loja-' + lojaId);
+    if (el) el.classList.add('aberta');
+  });
+}
+
+async function salvarCampoQuebra(id, campo, valor) {
+  var obj = {};
+  obj[campo] = valor;
+  await sb.from('quebras_itens').update(obj).eq('id', id);
+  // Atualiza só os totais sem fechar a loja
+  atualizarTotaisQuebras();
+}
+
+async function atualizarTotaisQuebras() {
+  var lojasResult = await sb.from('quebras_lojas').select('*');
+  var itensResult = await sb.from('quebras_itens').select('*');
+  var lojas = lojasResult.data || [];
+  var itens = itensResult.data || [];
+
+  var itensPorLoja = {};
+  itens.forEach(function(item) {
+    if (!itensPorLoja[item.loja_id]) itensPorLoja[item.loja_id] = [];
+    itensPorLoja[item.loja_id].push(item);
+  });
+
+  var somaSepGeral = 0;
+  var somaReqGeral = 0;
+  var somaPerdasGeral = 0;
+
+  lojas.forEach(function(loja) {
+    var lista = itensPorLoja[loja.id] || [];
+    var totSep = 0, totReq = 0, totPer = 0;
+    lista.forEach(function(item) {
+      totSep += parseNumeroQuebra(item.separados);
+      totReq += parseNumeroQuebra(item.requalificacao);
+      totPer += parseNumeroQuebra(item.perdas);
+    });
+    somaSepGeral += totSep;
+    somaReqGeral += totReq;
+    somaPerdasGeral += totPer;
+
+    var box = document.querySelector('#quebra-loja-' + loja.id + ' .totais-loja');
+    if (box) {
+      box.textContent = 'Totais da loja — Separados: ' + totSep + ' | Requalificação: ' + totReq + ' | Perdas: ' + totPer;
+    }
+  });
+
+  var totalBox = document.getElementById('totalGeralQuebras');
+  if (totalBox && lojas.length > 0) {
+    totalBox.innerHTML = 'TOTAL GERAL<br>Separados: ' + somaSepGeral + ' &nbsp;|&nbsp; Requalificação: ' + somaReqGeral + ' &nbsp;|&nbsp; Perdas: ' + somaPerdasGeral;
+    totalBox.classList.remove('hidden');
+  }
+}
+
+async function removerLinhaQuebra(id) {
+  if (!confirm('Remover esta linha?')) return;
+  await sb.from('quebras_itens').delete().eq('id', id);
+  carregarQuebrasLojas();
+}
+
+async function removerLojaQuebra(id, nome) {
+  if (!confirm('Excluir a loja "' + nome + '" e todos os itens dela?')) return;
+  await sb.from('quebras_lojas').delete().eq('id', id);
+  carregarQuebrasLojas();
+}
+
+async function exportarPDFQuebraLoja(lojaId, nomeLoja) {
+  var result = await sb.from('quebras_itens').select('*').eq('loja_id', lojaId).order('created_at');
+  var data = result.data || [];
+
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF();
+  var dataAtual = new Date().toLocaleString('pt-BR');
+
+  doc.setFontSize(14);
+  doc.text('Quebras e Avarias', 14, 16);
+  doc.setFontSize(11);
+  doc.text('Loja: ' + nomeLoja, 14, 24);
+  doc.text('Exportado em: ' + dataAtual, 14, 30);
+
+  var totSep = 0, totReq = 0, totPer = 0;
+  var rows = data.map(function(item) {
+    totSep += parseNumeroQuebra(item.separados);
+    totReq += parseNumeroQuebra(item.requalificacao);
+    totPer += parseNumeroQuebra(item.perdas);
+    return [
+      item.produto || '-',
+      item.separados || '-',
+      item.requalificacao || '-',
+      item.perdas || '-',
+      item.total || '-'
+    ];
+  });
+
+  doc.autoTable({
+    startY: 36,
+    head: [['Produto', 'Separados', 'Requalificação', 'Perdas', 'Total']],
+    body: rows,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [217, 119, 6] }
+  });
+
+  var y = doc.lastAutoTable.finalY + 8;
+  doc.setFontSize(10);
+  doc.text('Totais — Separados: ' + totSep + ' | Requalificação: ' + totReq + ' | Perdas: ' + totPer, 14, y);
+
+  doc.save('Quebras_' + nomeLoja.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+}
+
+async function exportarPDFQuebrasGeral() {
+  var lojasResult = await sb.from('quebras_lojas').select('*').order('created_at');
+  var itensResult = await sb.from('quebras_itens').select('*').order('created_at');
+  var lojas = lojasResult.data || [];
+  var itens = itensResult.data || [];
+
+  if (lojas.length === 0) {
+    alert('Nenhuma loja para exportar');
+    return;
+  }
+
+  var itensPorLoja = {};
+  itens.forEach(function(item) {
+    if (!itensPorLoja[item.loja_id]) itensPorLoja[item.loja_id] = [];
+    itensPorLoja[item.loja_id].push(item);
+  });
+
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF();
+  var dataAtual = new Date().toLocaleString('pt-BR');
+  var y = 16;
+
+  doc.setFontSize(14);
+  doc.text('Quebras e Avarias - Relatório Geral', 14, y);
+  y += 7;
+  doc.setFontSize(10);
+  doc.text('Exportado em: ' + dataAtual, 14, y);
+  y += 10;
+
+  var somaSepGeral = 0, somaReqGeral = 0, somaPerdasGeral = 0;
+
+  lojas.forEach(function(loja, index) {
+    if (y > 250) {
+      doc.addPage();
+      y = 16;
+    }
+
+    var lista = itensPorLoja[loja.id] || [];
+    var totSep = 0, totReq = 0, totPer = 0;
+
+    var rows = lista.map(function(item) {
+      totSep += parseNumeroQuebra(item.separados);
+      totReq += parseNumeroQuebra(item.requalificacao);
+      totPer += parseNumeroQuebra(item.perdas);
+      return [
+        item.produto || '-',
+        item.separados || '-',
+        item.requalificacao || '-',
+        item.perdas || '-',
+        item.total || '-'
+      ];
+    });
+
+    somaSepGeral += totSep;
+    somaReqGeral += totReq;
+    somaPerdasGeral += totPer;
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(loja.nome, 14, y);
+    doc.setFont(undefined, 'normal');
+    y += 4;
+
+    doc.autoTable({
+      startY: y,
+      head: [['Produto', 'Separados', 'Requalificação', 'Perdas', 'Total']],
+      body: rows.length ? rows : [['-', '-', '-', '-', '-']],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [217, 119, 6] },
+      margin: { left: 14, right: 14 }
+    });
+
+    y = doc.lastAutoTable.finalY + 6;
+    doc.setFontSize(9);
+    doc.text('Totais da loja — Separados: ' + totSep + ' | Requalificação: ' + totReq + ' | Perdas: ' + totPer, 14, y);
+    y += 12;
+  });
+
+  if (y > 260) {
+    doc.addPage();
+    y = 16;
+  }
+
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'bold');
+  doc.text('TOTAL GERAL', 14, y);
+  y += 6;
+  doc.setFont(undefined, 'normal');
+  doc.text('Separados: ' + somaSepGeral + '  |  Requalificação: ' + somaReqGeral + '  |  Perdas: ' + somaPerdasGeral, 14, y);
+
+  doc.save('Quebras_Relatorio_Geral.pdf');
+}
