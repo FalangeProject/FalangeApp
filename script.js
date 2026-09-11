@@ -1014,6 +1014,12 @@ async function carregarQuebrasLojas() {
     html += '<span class="nome">' + escapeHtml(loja.nome) + '</span>';
     html += '</div>';
     html += '<div class="quebra-loja-body">';
+    html += '<div class="periodo-loja">';
+    html += '<label>📅 Período de contagem</label>';
+    html += '<input type="text" id="periodo-inicio-' + loja.id + '" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" value="' + escapeHtml(loja.periodo_inicio || '') + '" onchange="salvarPeriodoQuebra(\'' + loja.id + '\', \'periodo_inicio\', this.value)">';
+    html += '<span class="periodo-sep">até</span>';
+    html += '<input type="text" id="periodo-fim-' + loja.id + '" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" value="' + escapeHtml(loja.periodo_fim || '') + '" onchange="salvarPeriodoQuebra(\'' + loja.id + '\', \'periodo_fim\', this.value)">';
+    html += '</div>';
     html += '<div class="tabela-wrap"><table class="tabela-quebra"><thead><tr>';
     html += '<th class="col-produto">Produto</th>';
     html += '<th class="col-num">Separados</th>';
@@ -1042,6 +1048,11 @@ async function carregarQuebrasLojas() {
   });
 
   container.innerHTML = html;
+
+  lojas.forEach(function(loja) {
+    aplicarMascaraData(document.getElementById('periodo-inicio-' + loja.id));
+    aplicarMascaraData(document.getElementById('periodo-fim-' + loja.id));
+  });
 
   totalBox.innerHTML = 'TOTAL GERAL<br>Separados: ' + somaSepGeral + ' &nbsp;|&nbsp; Requalificação: ' + somaReqGeral + ' &nbsp;|&nbsp; Perdas: ' + somaPerdasGeral;
   totalBox.classList.remove('hidden');
@@ -1164,7 +1175,18 @@ async function removerLojaQuebra(id, nome) {
   carregarQuebrasLojas();
 }
 
+async function salvarPeriodoQuebra(lojaId, campo, valor) {
+  var obj = {};
+  obj[campo] = valor.trim();
+  var result = await sb.from('quebras_lojas').update(obj).eq('id', lojaId);
+  if (result.error) {
+    alert('Erro ao salvar período: ' + result.error.message);
+  }
+}
+
 async function exportarPDFQuebraLoja(lojaId, nomeLoja) {
+  var lojaResult = await sb.from('quebras_lojas').select('*').eq('id', lojaId).single();
+  var loja = lojaResult.data || {};
   var result = await sb.from('quebras_itens').select('*').eq('loja_id', lojaId).order('created_at');
   var data = result.data || [];
 
@@ -1176,7 +1198,16 @@ async function exportarPDFQuebraLoja(lojaId, nomeLoja) {
   doc.text('Quebras e Avarias', 14, 16);
   doc.setFontSize(11);
   doc.text('Loja: ' + nomeLoja, 14, 24);
-  doc.text('Exportado em: ' + dataAtual, 14, 30);
+
+  var temPeriodo = !!(loja.periodo_inicio || loja.periodo_fim);
+  if (temPeriodo) {
+    doc.text('Período: ' + (loja.periodo_inicio || '...') + ' até ' + (loja.periodo_fim || '...'), 14, 30);
+    doc.text('Exportado em: ' + dataAtual, 14, 36);
+  } else {
+    doc.text('Exportado em: ' + dataAtual, 14, 30);
+  }
+
+  var startY = temPeriodo ? 42 : 36;
 
   var totSep = 0, totReq = 0, totPer = 0;
   var rows = data.map(function(item) {
@@ -1193,7 +1224,7 @@ async function exportarPDFQuebraLoja(lojaId, nomeLoja) {
   });
 
   doc.autoTable({
-    startY: 36,
+    startY: startY,
     head: [['Produto', 'Separados', 'Requalificação', 'Perdas', 'Total']],
     body: rows,
     styles: { fontSize: 8 },
@@ -1268,7 +1299,13 @@ async function exportarPDFQuebrasGeral() {
     doc.setFont(undefined, 'bold');
     doc.text(loja.nome, 14, y);
     doc.setFont(undefined, 'normal');
-    y += 4;
+    y += 5;
+    if (loja.periodo_inicio || loja.periodo_fim) {
+      doc.setFontSize(9);
+      doc.text('Período: ' + (loja.periodo_inicio || '...') + ' até ' + (loja.periodo_fim || '...'), 14, y);
+      y += 5;
+    }
+    y += 2;
 
     doc.autoTable({
       startY: y,
