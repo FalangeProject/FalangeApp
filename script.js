@@ -1009,17 +1009,17 @@ async function carregarQuebrasLojas() {
     somaPerdasGeral += totPer;
 
     html += '<div class="quebra-loja" id="quebra-loja-' + loja.id + '">';
-    html += '<div class="quebra-loja-header" onclick="toggleQuebraLoja(\'' + loja.id + '\')">';
+        html += '<div class="quebra-loja-header" onclick="toggleQuebraLoja(\'' + loja.id + '\')">';
     html += '<span class="seta">▶</span>';
     html += '<span class="nome">' + escapeHtml(loja.nome) + '</span>';
     html += '</div>';
-    html += '<div class="quebra-loja-body">';
     html += '<div class="periodo-loja">';
     html += '<label>📅 Período de contagem</label>';
     html += '<input type="text" id="periodo-inicio-' + loja.id + '" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" value="' + escapeHtml(loja.periodo_inicio || '') + '" onchange="salvarPeriodoQuebra(\'' + loja.id + '\', \'periodo_inicio\', this.value)">';
     html += '<span class="periodo-sep">até</span>';
     html += '<input type="text" id="periodo-fim-' + loja.id + '" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" value="' + escapeHtml(loja.periodo_fim || '') + '" onchange="salvarPeriodoQuebra(\'' + loja.id + '\', \'periodo_fim\', this.value)">';
     html += '</div>';
+    html += '<div class="quebra-loja-body">';
     html += '<div class="tabela-wrap"><table class="tabela-quebra"><thead><tr>';
     html += '<th class="col-produto">Produto</th>';
     html += '<th class="col-num">Separados</th>';
