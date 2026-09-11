@@ -667,3 +667,39 @@ header h1 {
   font-weight: 600;
   line-height: 1.5;
 }
+.periodo-loja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: #fff7ed;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.periodo-loja label {
+  font-weight: 600;
+  color: #9a3412;
+  width: 100%;
+}
+
+.periodo-loja input {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 10px;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.periodo-loja input:focus {
+  border-color: #d97706;
+}
+
+.periodo-loja .periodo-sep {
+  color: #9a3412;
+  font-weight: 600;
+}
