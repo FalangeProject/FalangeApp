@@ -931,7 +931,7 @@ async function initQuebrasPage() {
 
   document.getElementById('btnSalvarLojaQuebra').addEventListener('click', salvarLojaQuebra);
   document.getElementById('btnPdfGeralQuebras').addEventListener('click', exportarPDFQuebrasGeral);
-
+document.getElementById('btnLimparQuebras').addEventListener('click', limparTodosDadosQuebras);
   carregarQuebrasLojas();
 }
 
@@ -1237,7 +1237,52 @@ async function exportarPDFQuebraLoja(lojaId, nomeLoja) {
 
   doc.save('Quebras_' + nomeLoja.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
 }
+async function limparTodosDadosQuebras() {
+  var ok = confirm(
+    'Isso vai APAGAR todos os itens, quantidades e períodos de TODAS as lojas.\n\n' +
+    'Os nomes das lojas serão mantidos.\n\n' +
+    'Tem certeza? Essa ação não pode ser desfeita.'
+  );
+  if (!ok) return;
 
+  var ok2 = confirm('Confirma a limpeza completa dos dados de Quebras e Avarias?');
+  if (!ok2) return;
+
+  var btn = document.getElementById('btnLimparQuebras');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Limpando...';
+  }
+
+  try {
+    var lojasResult = await sb.from('quebras_lojas').select('id');
+    var lojas = lojasResult.data || [];
+
+    if (lojas.length === 0) {
+      alert('Não há dados para limpar.');
+      return;
+    }
+
+    for (var i = 0; i < lojas.length; i++) {
+      await sb.from('quebras_itens').delete().eq('loja_id', lojas[i].id);
+      await sb.from('quebras_lojas').update({
+        periodo_inicio: '',
+        periodo_fim: ''
+      }).eq('id', lojas[i].id);
+    }
+
+    alert('Dados limpos com sucesso. As lojas foram mantidas.');
+    carregarQuebrasLojas();
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao limpar os dados. Tente novamente.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🗑️ Limpar todos os dados';
+    }
+  }
+}
 async function exportarPDFQuebrasGeral() {
   var lojasResult = await sb.from('quebras_lojas').select('*').order('created_at');
   var itensResult = await sb.from('quebras_itens').select('*').order('created_at');
